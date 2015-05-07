@@ -1,0 +1,43 @@
+{
+    "name": "websharks/dicer",
+    "homepage": "https://github.com/websharks/dicer",
+    "description": "Dependency injector for PHP.",
+    "keywords": [
+        "websharks"
+    ],
+    "type": "library",
+    "license": "BSD-2-Clause",
+    "authors": [{
+        "name": "websharks",
+        "homepage": "http://websharks-inc.com/",
+        "role": "company"
+    }, {
+        "name": "jaswsinc",
+        "homepage": "http://jaswsinc.com/",
+        "role": "developer"
+    }, {
+        "name": "raamdev",
+        "homepage": "http://raam.org/",
+        "role": "developer"
+    }],
+    "support": {
+        "source": "https://github.com/websharks/dicer",
+        "issues": "https://github.com/websharks/dicer/issues"
+    },
+
+    "require": {
+        "php": ">=5.4.7",
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+
+    "autoload": {
+        "psr-4": {
+            "WebSharks\\Dicer\\": "src/includes/classes"
+        }
+    },
+
+    "config": {
+        "vendor-dir": "src/vendor"
+    }
+}
