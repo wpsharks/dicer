@@ -58,10 +58,16 @@ class Core
      * Constructor.
      *
      * @since 150507 Initial release.
+     *
+     * @param array $default_rule Construct with an altered default rule.
      */
-    public function __construct()
+    public function __construct(array $default_rule = [])
     {
         $this->rules['*'] = $this->rule_defaults;
+
+        if ($default_rule) {
+            $this->addRule('*', $default_rule);
+        }
     }
 
     /**
