@@ -180,7 +180,7 @@ class Core
         $constructor    = $class->getConstructor(); // Returns null if class has no constructor.
         $params_closure = $constructor ? $this->getParamsClosure($constructor, $rule) : null;
 
-        if ($rule['shared']) {
+        if ($rule['shared'] && (!$rule['new_instances'] || !in_array($class_name, $rule['new_instances'], true))) {
             $closure = function (array $args, array $share) use ($class_name_lc, $class, $constructor, $params_closure) {
                 if ($constructor && $params_closure) {
                     $this->instances[$class_name_lc] = $class->newInstanceArgs($params_closure($args, $share));
@@ -200,7 +200,7 @@ class Core
         }
         if ($rule['call']) {
             $closure = function (array $args, array $share) use ($closure, $class, $rule) {
-                $instance = $closure($args, $share);
+                $instance = $closure($args, $share); // Instantiate class.
                 foreach ($rule['call'] as $_call) {
                     $_method = $class->getMethod($_call[0]);
                     $_args   = isset($_call[1]) ? $this->expandInstanceKeys($_call[1], []) : [];
