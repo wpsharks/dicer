@@ -4,6 +4,7 @@
  *
  * @since 15xxxx Initial release.
  */
+declare (strict_types = 1);
 namespace WebSharks\Dicer;
 
 \Phar::mapPhar('websharks-dicer.phar');

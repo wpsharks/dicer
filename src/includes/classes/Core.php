@@ -1,4 +1,5 @@
 <?php
+declare (strict_types = 1);
 namespace WebSharks\Dicer;
 
 /**
@@ -262,7 +263,7 @@ class Core
                 list($_class_name, $_allows_null, $_substitution, $_force_new_instance) = $_parameter_detail;
 
                 if ($args) { // Check if args contain class instance parameter overrides.
-                    for ($_i = 0, $_total_args = count($args); $_i < $_total_args; $_i++) {
+                    for ($_i = 0, $_total_args = count($args); $_i < $_total_args; ++$_i) {
                         if (($_allows_null && is_null($args[$_i])) || ($_class_name && $args[$_i] instanceof $_class_name)) {
                             $parameters[] = array_splice($args, $_i, 1)[0];
                             continue 2; // Filled instance w/ args.
