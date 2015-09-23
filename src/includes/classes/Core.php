@@ -79,9 +79,8 @@ class Core
      * @param string $class_name Class name (i.e., Namespace\Class).
      * @param array  $rule       An array of rule properties.
      */
-    public function addRule($class_name, array $rule)
+    public function addRule(string $class_name, array $rule)
     {
-        $class_name    = (string) $class_name;
         $class_name    = ltrim($class_name, '\\');
         $class_name_lc = strtolower($class_name);
 
@@ -109,9 +108,8 @@ class Core
      *
      * @return array An array of rule properties.
      */
-    public function getRule($class_name)
+    public function getRule(string $class_name): array
     {
-        $class_name    = (string) $class_name;
         $class_name    = ltrim($class_name, '\\');
         $class_name_lc = strtolower($class_name);
 
@@ -140,9 +138,8 @@ class Core
      *
      * @return object An object class instance.
      */
-    public function get($class_name, array $args = [], $force_new_instance = false, array $share = [])
+    public function get(string $class_name, array $args = [], bool $force_new_instance = false, array $share = [])
     {
-        $class_name    = (string) $class_name;
         $class_name    = ltrim($class_name, '\\');
         $class_name_lc = strtolower($class_name);
 
@@ -171,9 +168,8 @@ class Core
      *
      * @return callable A closure that returns the class instance.
      */
-    protected function getClosure($class_name, array $rule)
+    protected function getClosure(string $class_name, array $rule): callable
     {
-        $class_name    = (string) $class_name;
         $class_name    = ltrim($class_name, '\\');
         $class_name_lc = strtolower($class_name);
 
@@ -225,7 +221,7 @@ class Core
      *
      * @return callable A closure that returns an array of parameters; w/ dependencies injected deeply.
      */
-    protected function getParamsClosure(\ReflectionMethod $method, array $rule)
+    protected function getParamsClosure(\ReflectionMethod $method, array $rule): callable
     {
         $parameter_details = []; // Initialize.
 
