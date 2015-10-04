@@ -44,15 +44,19 @@ class Core
      * @type array Defaults.
      */
     protected $rule_defaults = [
-        'class_name'       => '*',
-        'shared'           => false,
-        'inherit'          => true,
+        'class_name' => '*',
+
+        'shared'  => false,
+        'inherit' => true,
+
         'construct_params' => [],
-        'substitutions'    => [],
-        'new_instances'    => [],
-        'call'             => [],
-        'instance_of'      => '',
-        'share_instances'  => [],
+
+        'call'          => [],
+        'substitutions' => [],
+        'instance_of'   => '',
+
+        'new_instances'   => [],
+        'share_instances' => [],
     ];
 
     /**
@@ -88,15 +92,19 @@ class Core
         $this->rules[$class_name_lc] = array_intersect_key($this->rules[$class_name_lc], $this->rule_defaults);
         $rule                        = &$this->rules[$class_name_lc];
 
-        $rule['class_name']       = $class_name;
-        $rule['shared']           = (boolean) $rule['shared'];
-        $rule['inherit']          = (boolean) $rule['inherit'];
+        $rule['class_name'] = $class_name;
+
+        $rule['shared']  = (bool) $rule['shared'];
+        $rule['inherit'] = (bool) $rule['inherit'];
+
         $rule['construct_params'] = (array) $rule['construct_params'];
-        $rule['substitutions']    = (array) $rule['substitutions'];
-        $rule['new_instances']    = (array) $rule['new_instances'];
-        $rule['call']             = (array) $rule['call'];
-        $rule['instance_of']      = ltrim((string) $rule['instance_of'], '\\');
-        $rule['share_instances']  = (array) $rule['share_instances'];
+
+        $rule['call']          = (array) $rule['call'];
+        $rule['substitutions'] = (array) $rule['substitutions'];
+        $rule['instance_of']   = ltrim((string) $rule['instance_of'], '\\');
+
+        $rule['new_instances']   = $rule['shared'] ? (array) $rule['new_instances'] : [];
+        $rule['share_instances'] = !$rule['shared'] ? (array) $rule['share_instances'] : [];
     }
 
     /**
@@ -123,6 +131,7 @@ class Core
                 }
             }
         } // unset($_class_name_lc, $_rule); // Housekeeping.
+
         return $this->rules['*'];
     }
 
@@ -155,6 +164,7 @@ class Core
                 $_share = $this->get($_share);
             }
         } // unset($_share); // Housekeeping.
+
         return $this->closures[$class_name_lc]($args, $share);
     }
 
@@ -197,13 +207,12 @@ class Core
         }
         if ($rule['call']) {
             $closure = function (array $args, array $share) use ($closure, $class, $rule) {
-                $instance = $closure($args, $share); // Instantiate class.
+                $instance = $closure($args, $share);
                 foreach ($rule['call'] as $_call) {
                     $_method = $class->getMethod($_call[0]);
                     $_args   = isset($_call[1]) ? $this->expandInstanceKeys($_call[1], []) : [];
                     $_method->invokeArgs($instance, $_args);
-                }
-                #unset($_call, $_method, $_args); // Housekeeping.
+                } // unset($_call, $_method, $_args); // Housekeeping.
 
                 return $instance;
             };
@@ -223,60 +232,40 @@ class Core
      */
     protected function getParamsClosure(\ReflectionMethod $method, array $rule): callable
     {
-        $parameter_details = []; // Initialize.
+        $param_details = []; // Initialize parameter details.
 
         foreach ($method->getParameters() as $_parameter) {
-            if (($_class = $_parameter->getClass())) {
-                $_class_name = $_class->name;
-            } else {
-                $_class_name = ''; // No typehint.
-            }
-            $parameter_details[] = [
-                $_class_name, // Possible typehint on this parameter.
-                $_parameter->allowsNull(), // If the parameter allows a `NULL` value.
-                $_class_name && $rule['substitutions'] && array_key_exists($_class_name, $rule['substitutions']),
-                $_class_name && $rule['new_instances'] && in_array($_class_name, $rule['new_instances'], true),
-            ];
-        }
-        #unset($_parameter, $_class, $_class_name); // Housekeeping.
+            $_name               = $_parameter->getName();
+            $_class              = $_parameter->getClass();
+            $_class_name         = $_class ? $_class->name : '';
+            $_allows_null        = $_parameter->allowsNull();
+            $_has_default_value  = $_parameter->isDefaultValueAvailable();
+            $_default_value      = $_has_default_value ? $_parameter->getDefaultValue() : null;
+            $_has_substitution   = $_class_name && $rule['substitutions'] && array_key_exists($_class_name, $rule['substitutions']);
+            $_force_new_instance = $_class_name && $rule['new_instances'] && in_array($_class_name, $rule['new_instances'], true);
+            $param_details[]     = [$_name, $_class_name, $_allows_null, $_has_default_value, $_default_value, $_has_substitution, $_force_new_instance];
+        } // unset($_parameter, $_name, $_class, $_class_name, $_allows_null, $_has_default_value, $_default_value, $_has_substitution, $_force_new_instance);
 
-        return function (array $args, array $share) use ($parameter_details, $rule) {
+        return function (array $args, array $share) use ($param_details, $rule) {
             $parameters = []; // Initialize parameters.
 
-            if ($rule['share_instances']) {
-                $share = array_merge(
-                    $share, // Existing shared instances.
-                    array_map([$this, 'get'], $rule['share_instances'])
-                );
+            if ($rule['share_instances']) { // Merged shared instances.
+                $share = array_merge($share, array_map([$this, 'get'], $rule['share_instances']));
             }
-            if ($share) {
-                $args = array_merge($args, $share);
+            if ($rule['construct_params']) { // In this specific order; `$args` take precedence.
+                $args = array_merge($this->expandInstanceKeys($rule['construct_params'], $share), $args);
             }
-            if ($rule['construct_params']) {
-                $args = array_merge($args, $this->expandInstanceKeys($rule['construct_params'], $share));
-            }
-            foreach ($parameter_details as $_parameter_detail) {
-                list($_class_name, $_allows_null, $_substitution, $_force_new_instance) = $_parameter_detail;
-
-                if ($args) { // Check if args contain class instance parameter overrides.
-                    for ($_i = 0, $_total_args = count($args); $_i < $_total_args; ++$_i) {
-                        if (($_allows_null && is_null($args[$_i])) || ($_class_name && $args[$_i] instanceof $_class_name)) {
-                            $parameters[] = array_splice($args, $_i, 1)[0];
-                            continue 2; // Filled instance w/ args.
-                        }
-                    }
-                    #unset($_i, $_total_args); // Housekeeping.
-                }
-                if ($_class_name) {
-                    $parameters[] = $_substitution // Substitute this class instance?
+            foreach ($param_details as list($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value, $_has_substitution, $_force_new_instance)) {
+                if ($_name && $args && array_key_exists($_name, $args)) {
+                    $parameters[] = $args[$_name];
+                } elseif ($_class_name) {
+                    $parameters[] = $_has_substitution // Has substitution?
                         ? $this->expandInstanceKeys($rule['substitutions'][$_class_name], $share)
                         : $this->get($_class_name, [], $_force_new_instance, $share);
-                } elseif ($args) {
-                    $parameters[] = $this->expandInstanceKeys(array_shift($args), []);
+                } elseif ($_has_default_value) {
+                    $parameters[] = $_default_value;
                 }
-            }
-            #unset($_parameter_detail); // Housekeeping.
-            #unset($_class_name, $_allows_null, $_substitution, $_force_new_instance);
+            } // unset($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value, $_has_substitution, $_force_new_instance);
 
             return $parameters; // With deep dependency injection.
         };
@@ -302,8 +291,7 @@ class Core
             } else {
                 foreach ($value as $_key => &$_value) {
                     $_value = $this->expandInstanceKeys($_value, $share);
-                }
-                unset($_key, $_value); // Housekeeping.
+                } // unset($_key, $_value); // Housekeeping.
             }
         }
         return $value;
