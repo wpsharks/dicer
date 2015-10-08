@@ -88,8 +88,8 @@ class Core
         $class_name    = ltrim($class_name, '\\');
         $class_name_lc = strtolower($class_name);
 
-        $this->rules[$class_name_lc] = array_merge($this->rule_defaults, $rule);
-        $this->rules[$class_name_lc] = array_intersect_key($this->rules[$class_name_lc], $this->rule_defaults);
+        $this->rules[$class_name_lc] = array_merge($this->rules['*'], $rule);
+        $this->rules[$class_name_lc] = array_intersect_key($this->rules[$class_name_lc], $this->rules['*']);
         $rule                        = &$this->rules[$class_name_lc];
 
         $rule['class_name'] = $class_name;
