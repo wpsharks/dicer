@@ -210,7 +210,7 @@ class Core
                 $instance = $closure($args, $share);
                 foreach ($rule['call'] as $_call) {
                     $_method = $class->getMethod($_call[0]);
-                    $_args   = isset($_call[1]) ? $this->expandInstanceKeys($_call[1], []) : [];
+                    $_args   = !empty($_call[1]) ? $this->expandInstanceKeys($_call[1], []) : [];
                     $_method->invokeArgs($instance, $_args);
                 } // unset($_call, $_method, $_args); // Housekeeping.
 
