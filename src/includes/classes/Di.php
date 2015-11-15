@@ -229,4 +229,4 @@ class Di
  *
  * @type string Version.
  */
-const VERSION = '151113'; //version//
+const VERSION = '151115'; //version//
