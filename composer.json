@@ -2,11 +2,9 @@
   "name": "websharks/dicer",
   "homepage": "https://github.com/websharks/dicer",
   "description": "Dependency injector for PHP.",
-  "keywords": [
-    "websharks"
-  ],
+  "keywords": ["websharks"],
   "type": "library",
-  "license": "BSD-2-Clause",
+  "license": "GPL-3.0+",
   "authors": [{
     "name": "websharks",
     "homepage": "http://websharks-inc.com/",
@@ -26,7 +24,7 @@
   },
 
   "require": {
-    "php": ">=7.0-RC3"
+    "php": ">=7.0.0-RC7"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

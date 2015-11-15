@@ -1,6 +1,6 @@
 # Dicer (PHP Dependency Injector)
 
-A simple, lightweight dependency injector for PHP (based on [Dice](https://github.com/TomBZombie/Dice))
+A simple, lightweight dependency injector for PHP.
 
 [![](https://img.shields.io/github/license/websharks/dicer.svg)](https://github.com/websharks/dicer/blob/HEAD/LICENSE.txt)
 [![](https://img.shields.io/badge/made-w%2F_100%25_pure_awesome_sauce-AB815F.svg?label=made)](http://websharks-inc.com/)
