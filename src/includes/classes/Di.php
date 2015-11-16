@@ -44,6 +44,15 @@ class Di
     ];
 
     /**
+     * Total rules.
+     *
+     * @since 151115
+     *
+     * @type int Total rules.
+     */
+    protected $total_rules = 1;
+
+    /**
      * Version.
      *
      * @since 151115
@@ -160,6 +169,8 @@ class Di
         if ($key !== '*') { // Cannot contain this global-only key.
             unset($this->rules[$key]['new_instances']); // Not applicable.
         }
+        $this->total_rules = count($this->rules);
+
         return $this;
     }
 
@@ -178,15 +189,15 @@ class Di
         if (isset($this->rules[$key])) {
             return $this->rules[$key];
         }
-        $parent_classes = null; // Initialize only.
-
-        foreach ($this->rules as $_key => $_rule) {
-            if ($_rule['allow_inheritance'] && $_rule['name'] !== '*' && $name !== '*') {
-                if (is_subclass_of($name, $_rule['name'], true)) {
-                    return $_rule; // Inherit parent rule.
-                }
+        // Note: `class_parents()` returns in reverse inheritance order.
+        if ($this->total_rules === 1 || !($parent_class_names = class_parents($name))) {
+            return $this->rules['*']; // No other rules to consider.
+        }
+        foreach (array_map('strtolower', $parent_class_names) as $_parent_class_key) {
+            if (isset($this->rules[$_parent_class_key]) && $this->rules[$_parent_class_key]['allow_inheritance']) {
+                return $this->rules[$_parent_class_key]; // Closest parent rule.
             }
-        } // unset($_key, $_rule); // Housekeeping.
+        } // unset($_parent_class_key); // Housekeeping.
 
         return $this->rules['*'];
     }
@@ -232,16 +243,16 @@ class Di
      *
      * @since 151115 Initial release.
      *
-     * @param \ReflectionMethod A reflection method.
-     * @param array $class_rule A class-specific rule.
+     * @param \ReflectionMethod $constructor Constructor.
+     * @param array             $class_rule  A class-specific rule.
      *
      * @return callable Closure that returns an array of parameters.
      */
-    protected function getParamsClosure(\ReflectionMethod $method, array $class_rule): callable
+    protected function getParamsClosure(\ReflectionMethod $constructor, array $class_rule): callable
     {
         $param_details = []; // Initialize parameter details.
 
-        foreach ($method->getParameters() as $_parameter) {
+        foreach ($constructor->getParameters() as $_parameter) {
             $_name       = $_parameter->getName();
             $_class      = $_parameter->getClass();
             $_class_name = $_class->name ?? '';
@@ -266,6 +277,8 @@ class Di
                     $parameters[] = $this->get($_class_name);
                 } elseif ($_has_default_value) {
                     $parameters[] = $_default_value;
+                } else {
+                    throw new \Exception(sprintf('Missing parameter `%1$s` to `%2$s` constructor.', $_name, $constructor->class));
                 }
             } // unset($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value);
 
