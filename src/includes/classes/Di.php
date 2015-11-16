@@ -44,6 +44,15 @@ class Di
     ];
 
     /**
+     * Version.
+     *
+     * @since 151115
+     *
+     * @type string Version.
+     */
+    const VERSION = '151116'; //v//
+
+    /**
      * Constructor.
      *
      * @since 151115 Initial release.
@@ -82,6 +91,49 @@ class Di
     }
 
     /**
+     * Create a new class instance.
+     *
+     * @since 151115 Initial release.
+     *
+     * @param string $class_name Class name.
+     * @param array  $args       Constructor args.
+     *
+     * @return object An object class instance.
+     */
+    public function create(string $class_name, array $args = [])
+    {
+        $class_name = ltrim($class_name, '\\');
+        $class_key  = strtolower($class_name);
+
+        if (!isset($this->closures[$class_key])) {
+            $this->closures[$class_key] = $this->getClosure($class_name, $class_key);
+        }
+        return $this->closures[$class_key]($args);
+    }
+
+    /**
+     * Add a new instance.
+     *
+     * @since 151115 Initial release.
+     *
+     * @param object $instance Object instance.
+     *
+     * @return self Reference; for chaining.
+     */
+    public function addInstance($instance): self
+    {
+        if (!is_object($instance)) {
+            throw new \Exception('Not an object instance.');
+        }
+        $class_key = strtolower(get_class($instance));
+
+        if (!isset($this->instances[$class_key])) {
+            $this->instances[$class_key] = $instance;
+        }
+        return $this;
+    }
+
+    /**
      * Add a new rule.
      *
      * @since 151115 Initial release.
@@ -89,9 +141,9 @@ class Di
      * @param string $name Rule name.
      * @param array  $rule Rule properties.
      *
-     * @return array An array of rule properties.
+     * @return self Reference; for chaining.
      */
-    public function addRule(string $name, array $rule): array
+    public function addRule(string $name, array $rule): self
     {
         $name = ltrim($name, '\\');
         $key  = strtolower($name);
@@ -108,7 +160,7 @@ class Di
         if ($key !== '*') { // Cannot contain this global-only key.
             unset($this->rules[$key]['new_instances']); // Not applicable.
         }
-        return $this->rules[$key];
+        return $this;
     }
 
     /**
@@ -221,12 +273,3 @@ class Di
         };
     }
 }
-
-/**
- * Version.
- *
- * @since 151115
- *
- * @type string Version.
- */
-const VERSION = '151115'; //version//
