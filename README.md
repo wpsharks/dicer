@@ -1,14 +1,21 @@
 # Dicer (PHP Dependency Injector)
 
+<img src="https://cdn.websharks-inc.com/websharks/uploads/2013/11/sharks-logo.png" width="225" align="right" />
+
 A simple, lightweight dependency injector for PHP.
 
-[![](https://img.shields.io/github/license/websharks/dicer.svg)](https://github.com/websharks/dicer/blob/HEAD/LICENSE.txt)
-[![](https://img.shields.io/badge/made-w%2F_100%25_pure_awesome_sauce-AB815F.svg?label=made)](http://websharks-inc.com/)
-[![](https://img.shields.io/badge/by-WebSharks_Inc.-656598.svg?label=by)](http://www.websharks-inc.com/team/)
-[![](https://img.shields.io/github/release/websharks/dicer.svg?label=latest)](https://github.com/websharks/dicer/releases)
-[![](https://img.shields.io/packagist/v/websharks/dicer.svg?label=packagist)](https://packagist.org/packages/websharks/dicer)
-[![](https://img.shields.io/github/issues/websharks/dicer.svg?label=issues)](https://github.com/websharks/dicer/issues)
-[![](https://img.shields.io/github/forks/websharks/dicer.svg?label=forks)](https://github.com/websharks/dicer/network)
-[![](https://img.shields.io/github/stars/websharks/dicer.svg?label=stars)](https://github.com/websharks/dicer/stargazers)
-[![](https://img.shields.io/github/downloads/websharks/dicer/latest/total.svg?label=downloads)](https://github.com/websharks/dicer/releases)
-[![](https://img.shields.io/packagist/dt/websharks/dicer.svg?label=packagist)](https://packagist.org/packages/websharks/dicer)
+```json
+{
+    "require": {
+        "websharks/dicer": "dev-master"
+    }
+}
+```
+
+## Built w/ PhpStorm™
+
+<img src="https://www.jetbrains.com/phpstorm/documentation/docs/logo_phpstorm.png" align="right" />
+
+Yes! We love [PhpStorm™](https://www.jetbrains.com/phpstorm/) (from IntelliJ IDEA). It's is a syntax-aware IDE that comes with a lot of amazing features. From Code Inspection, to Style Guidelines, to External Tools; you will find everything you need to build professional applications in PHP/JS/CSS and many other languages that PhpStorm™ supports via easy-to-install plugins.
+
+... [Learn more about why WebSharks™ uses PhpStorm](http://www.websharks-inc.com/post/phpstorm/)
