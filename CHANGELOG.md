@@ -1,3 +1,8 @@
+## 151116
+
+- Improving rule inheritance.
+- Adding new method: `addInstance()`.
+
 ## 151115
 
 - Complete rewrite; simplifying.
