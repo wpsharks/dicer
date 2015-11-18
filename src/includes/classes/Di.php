@@ -88,7 +88,7 @@ class Di
     public function get(string $class_name, array $args = [])
     {
         $class_name = ltrim($class_name, '\\');
-        $class_key  = strtolower($class_name);
+        $class_key  = mb_strtolower($class_name);
 
         if (isset($this->instances[$class_key])) {
             return $this->instances[$class_key];
@@ -112,7 +112,7 @@ class Di
     public function create(string $class_name, array $args = [])
     {
         $class_name = ltrim($class_name, '\\');
-        $class_key  = strtolower($class_name);
+        $class_key  = mb_strtolower($class_name);
 
         if (!isset($this->closures[$class_key])) {
             $this->closures[$class_key] = $this->getClosure($class_name, $class_key);
@@ -121,24 +121,32 @@ class Di
     }
 
     /**
-     * Add a new instance.
+     * Add new instances.
      *
      * @since 151115 Initial release.
      *
-     * @param object $instance Object instance.
+     * @param array $instances Class instances.
      *
      * @return self Reference; for chaining.
      */
-    public function addInstance($instance): self
+    public function addInstances(array $instances): self
     {
-        if (!is_object($instance)) {
-            throw new \Exception('Not an object instance.');
-        }
-        $class_key = strtolower(get_class($instance));
+        foreach ($instances as $_key => $_instance) {
+            if (!is_object($_instance)) {
+                throw new \Exception('Invalid instance.');
+            }
+            if (is_string($_key)) {
+                $_class_name = ltrim($_key, '\\');
+            } else {
+                $_class_name = get_class($_instance);
+            }
+            $_class_key = mb_strtolower($_class_name);
 
-        if (!isset($this->instances[$class_key])) {
-            $this->instances[$class_key] = $instance;
-        }
+            if (!isset($this->instances[$_class_key])) {
+                $this->instances[$_class_key] = $_instance;
+            }
+        } // unset($_key, $_instance, $_class_name, $_class_key);
+
         return $this;
     }
 
@@ -155,7 +163,7 @@ class Di
     public function addRule(string $name, array $rule): self
     {
         $name = ltrim($name, '\\');
-        $key  = strtolower($name);
+        $key  = mb_strtolower($name);
 
         $global_default_rule = $this->rules['*']; // Copy.
         $this->rules[$key]   = array_merge($global_default_rule, $rule);
