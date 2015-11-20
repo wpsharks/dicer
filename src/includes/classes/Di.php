@@ -211,6 +211,34 @@ class Di
     }
 
     /**
+     * Resolve just-in-time closures.
+     *
+     * @since 151118 Resolve just-in-time closures.
+     *
+     * @param mixed Any input value to scan for `di::jit` keys.
+     *
+     * @return mixed Output value w/ resolved `di::jit` keys
+     */
+    protected function resolveJitClosures($value)
+    {
+        $is_array  = is_array($value);
+        $is_object = !$is_array && is_object($value);
+
+        if ($is_array && isset($value['di::jit'])) {
+            if ($value['di::jit'] instanceof \Closure) {
+                return $value['di::jit']($this);
+            } else { // Unexpected `di::jit` value.
+                throw new \Exception('Unexpected `di::jit`.');
+            }
+        } elseif ($is_array || $is_object) {
+            foreach ($value as $_key_prop => &$_value) {
+                $_value = $this->resolveJitClosures($_value);
+            } // unset($_key_prop, $_value);
+        }
+        return $value; // Resolved deeply.
+    }
+
+    /**
      * Get a specific class closure.
      *
      * @since 151115 Initial release.
@@ -261,7 +289,8 @@ class Di
         $param_details = []; // Initialize parameter details.
 
         foreach ($constructor->getParameters() as $_parameter) {
-            $_name       = $_parameter->getName();
+            $_name = $_parameter->getName();
+
             $_class      = $_parameter->getClass();
             $_class_name = $_class->name ?? '';
 
@@ -272,11 +301,11 @@ class Di
             $param_details[] = [$_name, $_class_name, $_allows_null, $_has_default_value, $_default_value];
         } // unset($_parameter, $_name, $_class, $_class_name, $_allows_null, $_has_default_value, $_default_value);
 
-        return function (array $args) use ($param_details, $class_rule) {
+        return function (array $args) use ($param_details, $class_rule, $resolveInstanceKeys) {
             $parameters = []; // Initialize parameters.
 
-            if ($class_rule['construct_params']) { // `$args` precedence.
-                $args = array_merge($class_rule['construct_params'], $args);
+            if ($class_rule['construct_params']) { // Note: `$args` take precedence here.
+                $args = array_merge($this->resolveJitClosures($class_rule['construct_params']), $args);
             }
             foreach ($param_details as list($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value)) {
                 if ($_name && $args && array_key_exists($_name, $args)) {
