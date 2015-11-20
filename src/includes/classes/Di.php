@@ -59,7 +59,7 @@ class Di
      *
      * @type string Version.
      */
-    const VERSION = '151118'; //v//
+    const VERSION = '151120'; //v//
 
     /**
      * Constructor.
@@ -294,30 +294,34 @@ class Di
             $_class      = $_parameter->getClass();
             $_class_name = $_class->name ?? '';
 
-            $_allows_null       = $_parameter->allowsNull();
+            $_is_variadic       = $_parameter->isVariadic();
             $_has_default_value = $_parameter->isDefaultValueAvailable();
             $_default_value     = $_has_default_value ? $_parameter->getDefaultValue() : null;
 
-            $param_details[] = [$_name, $_class_name, $_allows_null, $_has_default_value, $_default_value];
-        } // unset($_parameter, $_name, $_class, $_class_name, $_allows_null, $_has_default_value, $_default_value);
+            $param_details[] = [$_name, $_class_name, $_is_variadic, $_has_default_value, $_default_value];
+        } // unset($_parameter, $_name, $_class, $_class_name, $_is_variadic, $_has_default_value, $_default_value);
 
-        return function (array $args) use ($param_details, $class_rule, $resolveInstanceKeys) {
+        return function (array $args) use ($param_details, $class_rule) {
             $parameters = []; // Initialize parameters.
 
             if ($class_rule['construct_params']) { // Note: `$args` take precedence here.
-                $args = array_merge($this->resolveJitClosures($class_rule['construct_params']), $args);
+                $args = array_merge((array) $this->resolveJitClosures($class_rule['construct_params']), $args);
             }
-            foreach ($param_details as list($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value)) {
-                if ($_name && $args && array_key_exists($_name, $args)) {
-                    $parameters[] = $args[$_name];
+            foreach ($param_details as list($_name, $_class_name, $_is_variadic, $_has_default_value, $_default_value)) {
+                if ($args && array_key_exists($_name, $args)) {
+                    if ($_is_variadic && is_array($args[$_name])) {
+                        $parameters = array_merge($parameters, $args[$_name]);
+                    } else {
+                        $parameters[] = $args[$_name];
+                    }
                 } elseif ($_class_name) {
                     $parameters[] = $this->get($_class_name);
                 } elseif ($_has_default_value) {
                     $parameters[] = $_default_value;
                 } else {
-                    throw new \Exception(sprintf('Missing parameter `%1$s` to `%2$s` constructor.', $_name, $constructor->class));
+                    throw new \Exception(sprintf('Missing `$%1$s` to `%2$s` constructor.', $_name, $constructor->class));
                 }
-            } // unset($_name, $_class_name, $_allows_null, $_has_default_value, $_default_value);
+            } // unset($_name, $_class_name, $_is_variadic, $_has_default_value, $_default_value);
 
             return $parameters; // With deep dependency injection.
         };
