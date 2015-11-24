@@ -36,10 +36,8 @@ class Di
      */
     protected $rules = [
         '*' => [
-            'class_name'        => '*',
-            'new_instances'     => [],
-            'construct_params'  => [],
-            'allow_inheritance' => true,
+            'new_instances'    => [],
+            'constructor_args' => [],
         ],
     ];
 
@@ -88,32 +86,11 @@ class Di
     public function get(string $class_name, array $args = [])
     {
         $class_name = ltrim($class_name, '\\');
-        $class_key  = mb_strtolower($class_name);
+        $class_key  = strtolower($class_name);
 
         if (isset($this->instances[$class_key])) {
             return $this->instances[$class_key];
         }
-        if (!isset($this->closures[$class_key])) {
-            $this->closures[$class_key] = $this->getClosure($class_name, $class_key);
-        }
-        return $this->closures[$class_key]($args);
-    }
-
-    /**
-     * Create a new class instance.
-     *
-     * @since 151115 Initial release.
-     *
-     * @param string $class_name Class name.
-     * @param array  $args       Constructor args.
-     *
-     * @return object An object class instance.
-     */
-    public function create(string $class_name, array $args = [])
-    {
-        $class_name = ltrim($class_name, '\\');
-        $class_key  = mb_strtolower($class_name);
-
         if (!isset($this->closures[$class_key])) {
             $this->closures[$class_key] = $this->getClosure($class_name, $class_key);
         }
@@ -132,19 +109,13 @@ class Di
     public function addInstances(array $instances): self
     {
         foreach ($instances as $_key => $_instance) {
-            if (!is_object($_instance)) {
-                throw new \Exception('Invalid instance.');
-            }
             if (is_string($_key)) {
                 $_class_name = ltrim($_key, '\\');
             } else {
                 $_class_name = get_class($_instance);
             }
-            $_class_key = mb_strtolower($_class_name);
-
-            if (!isset($this->instances[$_class_key])) {
-                $this->instances[$_class_key] = $_instance;
-            }
+            $_class_key                   = strtolower($_class_name);
+            $this->instances[$_class_key] = $_instance; // Cache the instance.
         } // unset($_key, $_instance, $_class_name, $_class_key);
 
         return $this;
@@ -163,16 +134,14 @@ class Di
     public function addRule(string $name, array $rule): self
     {
         $name = ltrim($name, '\\');
-        $key  = mb_strtolower($name);
+        $key  = strtolower($name);
 
-        $global_default_rule = $this->rules['*']; // Copy.
+        $global_default_rule = $this->rules['*'];
         $this->rules[$key]   = array_merge($global_default_rule, $rule);
         $this->rules[$key]   = array_intersect_key($this->rules[$key], $global_default_rule);
 
-        $this->rules[$key]['name']              = $name; // Preserve caSe.
-        $this->rules[$key]['new_instances']     = (array) $this->rules[$key]['new_instances'];
-        $this->rules[$key]['construct_params']  = (array) $this->rules[$key]['construct_params'];
-        $this->rules[$key]['allow_inheritance'] = (bool) $this->rules[$key]['allow_inheritance'];
+        $this->rules[$key]['new_instances']    = (array) $this->rules[$key]['new_instances'];
+        $this->rules[$key]['constructor_args'] = (array) $this->rules[$key]['constructor_args'];
 
         if ($key !== '*') { // Cannot contain this global-only key.
             unset($this->rules[$key]['new_instances']); // Not applicable.
@@ -187,25 +156,25 @@ class Di
      *
      * @since 151115 Initial release.
      *
-     * @param string $name Rule name.
-     * @param string $key  Rule key.
+     * @param string $name         Rule name.
+     * @param string $key          Rule key.
+     * @param array  $parent_names Parent names.
      *
      * @return array An array of rule properties.
      */
-    protected function getRule(string $name, string $key): array
+    protected function getRule(string $name, string $key, array $parent_names = []): array
     {
         if (isset($this->rules[$key])) {
             return $this->rules[$key];
         }
-        // Note: `class_parents()` returns in reverse inheritance order.
-        if ($this->total_rules === 1 || !($parent_class_names = class_parents($name))) {
-            return $this->rules['*']; // No other rules to consider.
+        if ($this->total_rules === 1 || !$parent_names) {
+            return $this->rules['*']; // Done here.
         }
-        foreach (array_map('strtolower', $parent_class_names) as $_parent_class_key) {
-            if (isset($this->rules[$_parent_class_key]) && $this->rules[$_parent_class_key]['allow_inheritance']) {
-                return $this->rules[$_parent_class_key]; // Closest parent rule.
+        foreach (array_map('strtolower', $parent_names) as $_parent_key) {
+            if (isset($this->rules[$_parent_key])) {
+                return $this->rules[$_parent_key];
             }
-        } // unset($_parent_class_key); // Housekeeping.
+        } // unset($_parent_key); // Housekeeping.
 
         return $this->rules['*'];
     }
@@ -215,31 +184,28 @@ class Di
      *
      * @since 151118 Resolve just-in-time closures.
      *
-     * @param mixed Any input value to scan for `di::jit` keys.
+     * @param array Input array to scan for `di::jit` keys.
      *
-     * @return mixed Output value w/ resolved `di::jit` keys
+     * @return array|mixed Output w/ resolved `di::jit` keys.
+     *
+     * @note Objects not iterated, on purpose! This avoids a deeper scan
+     *  that really is unnecessary when trying to find `di::jit` keys.
      */
-    protected function resolveJitClosures($value)
+    protected function resolveJitClosures(array $array)
     {
-        $is_array  = is_array($value);
-        $is_object = !$is_array && is_object($value);
-
-        if ($is_array && isset($value['di::jit'])) {
-            if ($value['di::jit'] instanceof \Closure) {
-                return $value['di::jit']($this);
-            } else { // Unexpected `di::jit` value.
-                throw new \Exception('Unexpected `di::jit`.');
-            }
-        } elseif ($is_array || $is_object) {
-            foreach ($value as $_key_prop => &$_value) {
-                $_value = $this->resolveJitClosures($_value);
-            } // unset($_key_prop, $_value);
+        if (isset($array['di::jit'])) {
+            return $array['di::jit']($this);
         }
-        return $value; // Resolved deeply.
+        foreach ($array as $_key => &$_value) {
+            if (is_array($_value)) {
+                $_value = $this->resolveJitClosures($_value);
+            }
+        } // unset($_key, $_value);
+        return $array;
     }
 
     /**
-     * Get a specific class closure.
+     * Get closure for a specific class.
      *
      * @since 151115 Initial release.
      *
@@ -250,12 +216,16 @@ class Di
      */
     protected function getClosure(string $class_name, string $class_key): callable
     {
+        $parent_class_names = class_parents($class_name);
+        $all_class_names    = $parent_class_names;
+        $all_class_names[]  = $class_name;
+
         $class                      = new \ReflectionClass($class_name);
-        $class_rule                 = $this->getRule($class_name, $class_key);
         $constructor                = $class->getConstructor(); // Null if no constructor.
+        $class_rule                 = $this->getRule($class_name, $class_key, $parent_class_names);
         $constructor_params_closure = $constructor ? $this->getParamsClosure($constructor, $class_rule) : null;
 
-        if (!$this->rules['*']['new_instances'] || !in_array($name, $this->rules['*']['new_instances'], true)) {
+        if (!$this->rules['*']['new_instances'] || !array_intersect($all_class_names, $this->rules['*']['new_instances'])) {
             return function (array $args) use ($class, $class_key, $constructor, $constructor_params_closure) {
                 if ($constructor && $constructor_params_closure) {
                     return ($this->instances[$class_key] = $class->newInstanceArgs($constructor_params_closure($args)));
@@ -304,8 +274,8 @@ class Di
         return function (array $args) use ($param_details, $class_rule) {
             $parameters = []; // Initialize parameters.
 
-            if ($class_rule['construct_params']) { // Note: `$args` take precedence here.
-                $args = array_merge((array) $this->resolveJitClosures($class_rule['construct_params']), $args);
+            if ($class_rule['constructor_args']) { // Note: `$args` take precedence here.
+                $args = array_merge($this->resolveJitClosures($class_rule['constructor_args']), $args);
             }
             foreach ($param_details as list($_name, $_class_name, $_is_variadic, $_has_default_value, $_default_value)) {
                 if ($args && array_key_exists($_name, $args)) {
