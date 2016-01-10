@@ -1,3 +1,10 @@
+## 160110
+
+- Updating to latest websharks/phings.
+- Adding back compat. class: `Core{}`.
+- Updating `.gitattributes`.
+- Updating `composer.json`.
+
 ## 151116
 
 - Improving rule inheritance.
