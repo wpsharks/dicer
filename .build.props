@@ -1,12 +1,12 @@
-project_title                = Dicer
+project_title                    = Dicer
 
-project_org                  = websharks
-project_slug                 = dicer
+project_owner                    = websharks
+project_slug                     = dicer
 
-project_ns                   = WebSharks\\Dicer
-project_sns                  = Dicer
+project_namespace                = WebSharks\\Dicer
+project_sub_namespace            = Dicer
 
-project_version              = %y%m%d
+project_version                  = %y%m%d
 
-project_php_required_version = 7.0.0-RC7
-project_php_up_to_version    = ${php.version}
+project_php_required_version     = 7.0.0-RC7
+project_php_tested_up_to_version = ${php.version}
