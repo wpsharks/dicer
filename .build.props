@@ -2,6 +2,7 @@ project_title                    = Dicer
 
 project_owner                    = websharks
 project_slug                     = dicer
+project_slack_channel            = dicer
 
 project_namespace                = WebSharks\\Dicer
 project_sub_namespace            = Dicer
