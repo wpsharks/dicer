@@ -1,3 +1,7 @@
+## $v
+
+- Debug fix: undefined `$constructor` on exception.
+
 ## 160110
 
 - Updating to latest websharks/phings.

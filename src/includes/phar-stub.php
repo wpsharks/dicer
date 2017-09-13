@@ -1,10 +1,13 @@
 <?php
 /**
- * PHAR Stub.
+ * Stub.
  *
- * @since 15xxxx Initial release.
+ * @author @jaswrks
+ * @copyright WebSharks™
  */
-declare (strict_types = 1);
+// @codingStandardsIgnoreFile
+
+declare(strict_types=1);
 namespace WebSharks\Dicer;
 
 \Phar::mapPhar('websharks-dicer.phar');

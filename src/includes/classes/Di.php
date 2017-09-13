@@ -1,5 +1,5 @@
 <?php
-declare (strict_types = 1);
+declare(strict_types=1);
 namespace WebSharks\Dicer;
 
 /**
@@ -57,7 +57,7 @@ class Di
      *
      * @type string Version.
      */
-    const VERSION = '160110'; //v//
+    const VERSION = '170913.23129'; //v//
 
     /**
      * Constructor.
@@ -228,9 +228,9 @@ class Di
         if (!$this->rules['*']['new_instances'] || !array_intersect($all_class_names, $this->rules['*']['new_instances'])) {
             return function (array $args) use ($class, $class_key, $constructor, $constructor_params_closure) {
                 if ($constructor && $constructor_params_closure) {
-                    return ($this->instances[$class_key] = $class->newInstanceArgs($constructor_params_closure($args)));
+                    return $this->instances[$class_key] = $class->newInstanceArgs($constructor_params_closure($args));
                 } else {
-                    return ($this->instances[$class_key] = $class->newInstanceWithoutConstructor());
+                    return $this->instances[$class_key] = $class->newInstanceWithoutConstructor();
                 }
             };
         } elseif ($constructor && $constructor_params_closure) {
@@ -271,7 +271,7 @@ class Di
             $param_details[] = [$_name, $_class_name, $_is_variadic, $_has_default_value, $_default_value];
         } // unset($_parameter, $_name, $_class, $_class_name, $_is_variadic, $_has_default_value, $_default_value);
 
-        return function (array $args) use ($param_details, $class_rule) {
+        return function (array $args) use ($constructor, $param_details, $class_rule) {
             $parameters = []; // Initialize parameters.
 
             if ($class_rule['constructor_args']) { // Note: `$args` take precedence here.
