@@ -2,7 +2,7 @@
 /**
  * Stub.
  *
- * @since 15xxxx Initial release.
+ * @since 170913.23168 Initial release.
  */
 declare (strict_types = 1);
 namespace WebSharks\Dicer;

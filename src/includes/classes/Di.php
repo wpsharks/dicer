@@ -57,7 +57,7 @@ class Di
      *
      * @type string Version.
      */
-    const VERSION = '170913.23129'; //v//
+    const VERSION = '170913.23168'; //v//
 
     /**
      * Constructor.
