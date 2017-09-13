@@ -1,3 +1,7 @@
+## $v
+
+- fix: Don't inject class when a default param value exists.
+
 ## v170913.23168
 
 - Debug fix: undefined `$constructor` on exception.

@@ -284,7 +284,7 @@ class Di
                     } else {
                         $parameters[] = $args[$_name];
                     }
-                } elseif ($_class_name) {
+                } elseif ($_class_name && !$_has_default_value) {
                     $parameters[] = $this->get($_class_name);
                 } elseif ($_has_default_value) {
                     $parameters[] = $_default_value;
